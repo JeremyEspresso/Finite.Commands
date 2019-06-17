@@ -47,6 +47,6 @@ namespace Finite.Commands
         /// members of <paramref name="fullPath"/> are passed as parameters to
         /// the command.
         /// </returns>
-        IEnumerable<CommandMatch> FindCommands(string[] fullPath);
+        IEnumerable<CommandMatch> FindCommands(ReadOnlyMemory<char>[] fullPath);
     }
 }

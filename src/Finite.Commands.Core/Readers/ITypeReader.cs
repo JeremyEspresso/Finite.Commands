@@ -5,6 +5,6 @@ namespace Finite.Commands
     public interface ITypeReader
     {
         Type SupportedType { get; }
-        bool TryRead(string value, out object result);
+        bool TryRead(ReadOnlySpan<char> value, out object result);
     }
 }

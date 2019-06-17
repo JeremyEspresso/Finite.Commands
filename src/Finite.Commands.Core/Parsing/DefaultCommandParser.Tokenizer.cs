@@ -143,8 +143,9 @@ namespace Finite.Commands
                 throw new ArgumentOutOfRangeException(
                     nameof(prefixLength));
 
-            var paramBuilder = new StringBuilder();
-            var result = new List<string>();
+            var commandMemory = commandText.AsMemory();
+            var paramStart = 0;
+            var result = new List<ReadOnlyMemory<char>>();
             var state = TokenizerState.Normal;
             var beginQuote = default(char);
 
@@ -157,7 +158,7 @@ namespace Finite.Commands
                 {
                     case TokenizerState.Normal
                         when char.IsWhiteSpace(c):
-                        result.Add(paramBuilder.ToString());
+                        result.Add(commandMemory.Slice(paramStart..i));
                         state = TokenizerState.ParameterSeparator;
                         break;
                     case TokenizerState.Normal
@@ -190,12 +191,12 @@ namespace Finite.Commands
                         when IsQuoteCharacter(c):
                         state = TokenizerState.QuotedString;
                         beginQuote = c;
-                        paramBuilder.Clear();
+                        paramStart = i;
                         break;
                     case TokenizerState.ParameterSeparator
                         when !char.IsWhiteSpace(c):
                         state = TokenizerState.Normal;
-                        paramBuilder.Clear();
+                        paramStart = i;
                         goto default;
 
                     case TokenizerState.QuotedString
@@ -208,13 +209,12 @@ namespace Finite.Commands
                             TokenizerFailureReason.UnfinishedQuotedString, i);
 
                     default:
-                        paramBuilder.Append(c);
                         break;
                 }
             }
 
             // Add any final parameters
-            result.Add(paramBuilder.ToString());
+            result.Add(commandMemory.Slice(paramStart));
 
             if (state != TokenizerState.Normal)
                 return Failure(TokenizerFailureReason.InvalidState,

@@ -7,14 +7,23 @@ namespace Finite.Commands
     internal sealed class MultiMap<TKey, TValue>
         : ILookup<TKey, TValue>
     {
-        private readonly Dictionary<TKey, List<TValue>> _members =
-            new Dictionary<TKey, List<TValue>>();
+        private readonly Dictionary<TKey, List<TValue>> _members;
 
         public IEnumerable<TValue> this[TKey key]
             => _members[key];
 
         public int Count
             => _members.Sum(x => x.Value.Count);
+
+        public MultiMap()
+        {
+            _members = new Dictionary<TKey, List<TValue>>();
+        }
+
+        public MultiMap(IEqualityComparer<TKey> comparer)
+        {
+            _members = new Dictionary<TKey, List<TValue>>(comparer);
+        }
 
         public bool Contains(TKey key)
             => _members.ContainsKey(key);
@@ -28,8 +37,7 @@ namespace Finite.Commands
 
         public bool TryGetValues(TKey key, out ICollection<TValue> values)
         {
-            List<TValue> temp;
-            if (_members.TryGetValue(key, out temp))
+            if (_members.TryGetValue(key, out List<TValue> temp))
             {
                 values = temp;
                 return true;

@@ -7,7 +7,7 @@ namespace Finite.Commands.Tests
 {
     public class ClassBuilderTests
     {
-        private static TestContext Context = new TestContext();
+        private static readonly TestContext Context = new TestContext();
 
         [Fact]
         public void IsValidModule()

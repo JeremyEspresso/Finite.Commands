@@ -10,7 +10,7 @@ namespace Finite.Commands.Core.Tests
     public class ReflectionTests
     {
         [Fact]
-        void FindCommands()
+        public void FindCommands()
         {
             CommandService<TestContext> cs = new CommandServiceBuilder<TestContext>()
                  .AddModules(Assembly.GetExecutingAssembly())

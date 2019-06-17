@@ -6,12 +6,9 @@ namespace Finite.Commands.Tests
 {
     public class ParserTests
     {
-        private static DefaultCommandParser<TestContext> Parser
+        private static readonly DefaultCommandParser<TestContext> Parser
             = new DefaultCommandParser<TestContext>();
-
-        private static ModuleInfo _ParserTestModule =
-            ClassBuilder.Build<TestContext>(typeof(ParserTestModule));
-        private static CommandService<TestContext> Service
+        private static readonly CommandService<TestContext> Service
              = new CommandServiceBuilder<TestContext>()
                 .AddCommandParser<DefaultCommandParser<TestContext>>()
                 .AddTypeReaderFactory<NullTypeReaderFactory>()
@@ -81,7 +78,7 @@ namespace Finite.Commands.Tests
             {
                 Message = msg
             };
-            
+
             return Parser.Parse(
                 new CommandExecutionContext(Service, context, null));
         }

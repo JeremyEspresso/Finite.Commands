@@ -7,9 +7,9 @@ namespace Finite.Commands
         public Type SupportedType
             => typeof(T);
 
-        public abstract bool TryRead(string value, out T result);
+        public abstract bool TryRead(ReadOnlySpan<char> value, out T result);
 
-        public bool TryRead(string value, out object result)
+        public bool TryRead(ReadOnlySpan<char> value, out object result)
         {
             var success = TryRead(value, out T realResult);
             result = realResult;

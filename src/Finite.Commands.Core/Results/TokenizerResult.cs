@@ -1,3 +1,5 @@
+using System;
+
 namespace Finite.Commands
 {
     // TODO: should this be sealed?
@@ -10,7 +12,7 @@ namespace Finite.Commands
         /// <summary>
         /// The parsed token stream, when successful, or null otherwise.
         /// </summary>
-        public string[] TokenStream { get; }
+        public ReadOnlyMemory<char>[] TokenStream { get; }
 
         /// <summary>
         /// The input string which caused the error, or null otherwise.
@@ -65,7 +67,7 @@ namespace Finite.Commands
         /// <param name="tokenStream">
         /// The parsed token stream.
         /// </param>
-        public TokenizerResult(string[] tokenStream)
+        public TokenizerResult(ReadOnlyMemory<char>[] tokenStream)
         {
             IsSuccess = true;
 

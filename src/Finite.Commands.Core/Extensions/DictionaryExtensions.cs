@@ -59,8 +59,7 @@ namespace System.Collections.Generic
             this Dictionary<TKey, TValue> @this,
             TKey key, Func<TKey, TValue> valueFactory)
         {
-            TValue value;
-            if (@this.TryGetValue(key, out value))
+            if (@this.TryGetValue(key, out TValue value))
                 return value;
 
             value = valueFactory(key);

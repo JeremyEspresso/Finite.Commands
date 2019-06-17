@@ -45,7 +45,7 @@ namespace Finite.Commands
 
         public static bool IsValidCommandDefinition(MethodInfo method)
         {
-            bool IsValidReturnType(Type returnType)
+            static bool IsValidReturnType(Type returnType)
             {
                 return returnType == NonGenericTaskTypeInfo
                     || IResultTypeInfo.IsAssignableFrom(returnType)
@@ -97,8 +97,7 @@ namespace Finite.Commands
             foreach (var @class in GetValidModules(type))
                 builder.AddSubmodule(BuildType(@class));
 
-            if (onBuildCallback != null)
-                onBuildCallback(builder);
+            onBuildCallback?.Invoke(builder);
 
             return builder;
         }

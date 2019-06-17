@@ -50,7 +50,7 @@ namespace Finite.Commands
         /// </returns>
         public IEnumerable<CommandInfo> GetAllCommands()
         {
-            IEnumerable<CommandInfo> IterateModule(ModuleInfo module)
+            static IEnumerable<CommandInfo> IterateModule(ModuleInfo module)
             {
                 foreach (var submodule in module.Submodules)
                     foreach (var command in IterateModule(submodule))
@@ -66,7 +66,7 @@ namespace Finite.Commands
         }
 
         /// <inheritdoc/>
-        public IEnumerable<CommandMatch> FindCommands(string[] fullPath)
+        public IEnumerable<CommandMatch> FindCommands(ReadOnlyMemory<char>[] fullPath)
         {
             return _commandMap.GetCommands(fullPath)
                 .OrderByDescending(x => x.CommandPath.Length)
@@ -93,8 +93,7 @@ namespace Finite.Commands
         {
             var execContext = new CommandExecutionContext(this, context,
                 services);
-
-            Task<IResult> ExecuteCommand(CommandExecutionContext ctx)
+            static Task<IResult> ExecuteCommand(CommandExecutionContext ctx)
                 => ctx.Command.ExecuteAsync(ctx);
 
             Func<Task<IResult>> GetPipelineFunc(

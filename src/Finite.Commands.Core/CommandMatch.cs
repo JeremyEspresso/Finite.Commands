@@ -1,3 +1,5 @@
+using System;
+
 namespace Finite.Commands
 {
     /// <summary>
@@ -17,8 +19,8 @@ namespace Finite.Commands
         /// <param name="path">
         /// The path of <paramref name="command" /> which was matched
         /// </param>
-        internal CommandMatch(CommandInfo command, string[] arguments,
-            string[] path)
+        internal CommandMatch(CommandInfo command, ReadOnlyMemory<char>[] arguments,
+            ReadOnlyMemory<char>[] path)
         {
             Command = command;
             Arguments = arguments;
@@ -33,11 +35,11 @@ namespace Finite.Commands
         /// <summary>
         /// The list of arguments to pass to this matched command
         /// </summary>
-        public string[] Arguments { get; }
+        public ReadOnlyMemory<char>[] Arguments { get; }
 
         /// <summary>
         /// The full path of the command which was matched
         /// </summary>
-        public string[] CommandPath { get; }
+        public ReadOnlyMemory<char>[] CommandPath { get; }
     }
 }

@@ -13,10 +13,10 @@ namespace Finite.Commands
         : ICommandParser<TContext>
         where TContext : class, ICommandContext
     {
+        private delegate (bool, object) ParserFunc(ReadOnlySpan<char> c);
         // A list of default parsers for TryParseObject.
-        private readonly Dictionary<Type, Func<string, (bool, object)>>
-            _defaultParsers
-            = new Dictionary<Type, Func<string, (bool, object)>>()
+        private readonly Dictionary<Type, ParserFunc> _defaultParsers
+            = new Dictionary<Type, ParserFunc>()
             {
                 [typeof(sbyte)] = (x) => (sbyte.TryParse(x, out var y), y),
                 [typeof(byte)] = (x) => (byte.TryParse(x, out var y), y),
@@ -30,7 +30,7 @@ namespace Finite.Commands
                 [typeof(long)] = (x) => (long.TryParse(x, out var y), y),
                 [typeof(ulong)] = (x) => (ulong.TryParse(x, out var y), y),
 
-                [typeof(string)] = (x) => (true, x)
+                [typeof(string)] = (x) => (true, x.ToString())
             };
 
         /// <summary>
@@ -52,7 +52,7 @@ namespace Finite.Commands
         /// A boolean indicating whether the parse was successful or not
         /// </returns>
         protected virtual bool TryParseObject(ITypeReaderFactory readerFactory,
-            Type paramType, string value, out object result)
+            Type paramType, ReadOnlySpan<char> value, out object result)
         {
             if (readerFactory.TryGetTypeReader(paramType, out var reader))
             {
@@ -96,7 +96,7 @@ namespace Finite.Commands
                 for (int i = startPos; i < match.Arguments.Length; i++)
                 {
                     var ok = TryParseObject(readerFactory,
-                        paramType, match.Arguments[i], out var value);
+                        paramType, match.Arguments[i].Span, out var value);
 
                     if (!ok)
                         return false;
@@ -131,7 +131,7 @@ namespace Finite.Commands
                 else
                 {
                     var ok = TryParseObject(readerFactory,
-                        argument.Type, match.Arguments[i], out var value);
+                        argument.Type, match.Arguments[i].Span, out var value);
 
                     if (!ok)
                         return false;
@@ -152,7 +152,7 @@ namespace Finite.Commands
             if (!result.IsSuccess)
                 return result;
 
-            string[] tokenStream = result.TokenStream;
+            ReadOnlyMemory<char>[] tokenStream = result.TokenStream;
             var commands = executionContext.CommandService;
 
             foreach (var match in commands.FindCommands(tokenStream))

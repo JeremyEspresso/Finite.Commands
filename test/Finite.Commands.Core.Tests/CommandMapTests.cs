@@ -14,8 +14,9 @@ namespace Finite.Commands.Tests
         [InlineData("nonNested")]
         [InlineData("nested", "command")]
         [InlineData("a", "third", "level")]
-        void AddRemove(params string[] path)
+        public void AddRemove(params string[] pathStr)
         {
+            var path = pathStr.Select(x => x.AsMemory()).ToArray();
             var map = new CommandMap();
             var testCommand = CreateCommand();
             var testCommand2 = CreateCommand();
@@ -37,9 +38,18 @@ namespace Finite.Commands.Tests
             new string[]{"nested"},
             new string[]{"nested", "command"},
             new string[]{"not", "a", "command"})]
-        void FindCommands(string[] command1Path, string[] command2Path,
-            string[] searchPath, string[] invalidSearchPath)
+        public void FindCommands(string[] command1PathStr,
+            string[] command2PathStr, string[] searchPathStr,
+            string[] invalidSearchPathStr)
         {
+            var command1Path = command1PathStr
+                .Select(x => x.AsMemory()).ToArray();
+            var command2Path = command2PathStr
+                .Select(x => x.AsMemory()).ToArray();
+            var searchPath = searchPathStr
+                .Select(x => x.AsMemory()).ToArray();
+            var invalidSearchPath = invalidSearchPathStr
+                .Select(x => x.AsMemory()).ToArray();
             var map = new CommandMap();
             var testCommand = CreateCommand();
             var testCommand2 = CreateCommand();
@@ -91,7 +101,7 @@ namespace Finite.Commands.Tests
             new string[]{"module", "module stat", "module stats"},
             "",
             0)]
-        void FindCommandsDefaultAlias(string[] aliases,
+        public void FindCommandsDefaultAlias(string[] aliases,
             string searchQuery, int expectedQueryResults)
         {
             var map = new CommandMap();
@@ -99,12 +109,15 @@ namespace Finite.Commands.Tests
 
             foreach (var alias in aliases)
             {
-                string[] path = alias.Split(' ');
+                var path = alias.Split(' ')
+                    .Select(x => x.AsMemory()).ToArray();
 
                 Assert.True(map.AddCommand(path, testCommand));
             }
 
-            var commands = map.GetCommands(searchQuery.Split(' '));
+            var commands = map.GetCommands(
+                searchQuery.Split(' ')
+                    .Select(x => x.AsMemory()).ToArray());
             Assert.NotNull(commands);
 
             var commandsArray = commands.ToArray();

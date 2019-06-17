@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -11,7 +12,7 @@ namespace Finite.Commands
         {
             _root = new CommandMapNode();
 
-            void AddCommandsForModule(ModuleInfo module, Stack<string> path)
+            void AddCommandsForModule(ModuleInfo module, Stack<ReadOnlyMemory<char>> path)
             {
                 foreach (var command in module.Commands)
                 {
@@ -20,7 +21,7 @@ namespace Finite.Commands
                     else
                         foreach (var alias in command.Aliases)
                         {
-                            path.Push(alias);
+                            path.Push(alias.AsMemory());
                             AddCommand(path.Reverse().ToArray(), command);
                             path.Pop();
                         }
@@ -30,7 +31,7 @@ namespace Finite.Commands
                     AddModule(submodule, path);
             }
 
-            void AddModule(ModuleInfo module, Stack<string> path)
+            void AddModule(ModuleInfo module, Stack<ReadOnlyMemory<char>> path)
             {
                 if (module.Aliases.Count == 0)
                 {
@@ -40,7 +41,7 @@ namespace Finite.Commands
                 {
                     foreach (var moduleAlias in module.Aliases)
                     {
-                        path.Push(moduleAlias);
+                        path.Push(moduleAlias.AsMemory());
                         AddCommandsForModule(module, path);
                         path.Pop();
                     }
@@ -49,33 +50,35 @@ namespace Finite.Commands
 
             if (modules != null)
             {
-                Stack<string> pathStack = new Stack<string>();
+                var pathStack = new Stack<ReadOnlyMemory<char>>();
                 foreach (var module in modules)
                     AddModule(module, pathStack);
             }
         }
 
-        public IEnumerable<CommandMatch> GetCommands(string[] commandPath)
+        public IEnumerable<CommandMatch> GetCommands(ReadOnlyMemory<char>[] commandPath)
             => _root.FindCommands(commandPath, 0);
 
-        public bool AddCommand(string[] path, CommandInfo command)
+        public bool AddCommand(ReadOnlyMemory<char>[] path, CommandInfo command)
             => _root.Add(command, path, 0);
 
-        public bool RemoveCommand(string[] path, CommandInfo command)
+        public bool RemoveCommand(ReadOnlyMemory<char>[] path, CommandInfo command)
             => _root.Remove(path, command, 0);
 
         private sealed class CommandMapNode
         {
-            private readonly MultiMap<string, CommandInfo> _commands;
-            private readonly Dictionary<string, CommandMapNode> _nodes;
+            private readonly MultiMap<ReadOnlyMemory<char>, CommandInfo> _commands;
+            private readonly Dictionary<ReadOnlyMemory<char>, CommandMapNode> _nodes;
 
             public CommandMapNode()
             {
-                _commands = new MultiMap<string, CommandInfo>();
-                _nodes = new Dictionary<string, CommandMapNode>();
+                _commands = new MultiMap<ReadOnlyMemory<char>, CommandInfo>(
+                    CommandEqualityComparer.Default);
+                _nodes = new Dictionary<ReadOnlyMemory<char>, CommandMapNode>(
+                    CommandEqualityComparer.Default);
             }
 
-            public IEnumerable<CommandMatch> FindCommands(string[] segments,
+            public IEnumerable<CommandMatch> FindCommands(ReadOnlyMemory<char>[] segments,
                 int startIndex)
             {
                 if (startIndex >= segments.Length)
@@ -100,7 +103,7 @@ namespace Finite.Commands
                 }
             }
 
-            public bool Add(CommandInfo command, string[] segments,
+            public bool Add(CommandInfo command, ReadOnlyMemory<char>[] segments,
                 int startIndex)
             {
                 if (startIndex == segments.Length - 1)
@@ -117,7 +120,7 @@ namespace Finite.Commands
                 }
             }
 
-            public bool Remove(string[] segments, CommandInfo command,
+            public bool Remove(ReadOnlyMemory<char>[] segments, CommandInfo command,
                 int startIndex)
             {
                 if (startIndex == segments.Length - 1)
@@ -133,7 +136,6 @@ namespace Finite.Commands
                             startIndex + 1);
                 }
 
-                command = null;
                 return false;
             }
         }
