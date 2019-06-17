@@ -158,7 +158,7 @@ namespace Finite.Commands
                 {
                     case TokenizerState.Normal
                         when char.IsWhiteSpace(c):
-                        result.Add(commandMemory.Slice(paramStart..i));
+                        result.Add(commandMemory[paramStart..i]);
                         state = TokenizerState.ParameterSeparator;
                         break;
                     case TokenizerState.Normal
