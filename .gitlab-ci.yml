@@ -14,7 +14,7 @@ build:
   script:
     - dotnet build Finite.Commands.sln -c Release
         /p:BuildId="`$BUILD_ID_CMD`" /p:Tag="$CI_COMMIT_TAG"
-    - dotnet pack Finite.Commands.sln -c Release -o ../../artifacts
+    - dotnet pack Finite.Commands.sln -c Release -o artifacts
         /p:BuildId="`$BUILD_ID_CMD`" /p:Tag="$CI_COMMIT_TAG"
   artifacts:
     name: "$CI_COMMIT_REF_SLUG"
