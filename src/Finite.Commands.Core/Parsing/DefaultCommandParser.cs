@@ -91,7 +91,7 @@ namespace Finite.Commands
             if (value.Length >= 2
                 && IsCompletedQuote(value[0], value[^1]))
             {
-                result = value.Slice(1..^2);
+                result = value.Slice(1..^1);
                 return true;
             }
 
