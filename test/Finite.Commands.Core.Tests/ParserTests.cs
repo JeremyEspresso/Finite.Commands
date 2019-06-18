@@ -88,13 +88,13 @@ namespace Finite.Commands.Tests
             Assert.False(Parse("remainder_param").IsSuccess);
             Assert.True(Parse("remainder_param a").IsSuccess);
             Assert.True(Parse("remainder_param 'oh okay this should work'").IsSuccess);
-            Assert.True(Parse("remainder_param ok this should work too").IsSuccess); // fails
+            Assert.True(Parse("remainder_param ok this should work too").IsSuccess);
         }
 
         [Fact]
         public void ValidParseWithRemainderOptionalParams()
         {
-            Assert.True(Parse("remainder_optional_param").IsSuccess); // fails
+            Assert.True(Parse("remainder_optional_param").IsSuccess);
             Assert.True(Parse("remainder_optional_param a").IsSuccess);
             Assert.True(Parse("remainder_optional_param 'oh okay this should work'").IsSuccess);
             Assert.True(Parse("remainder_optional_param ok this should work too").IsSuccess);
