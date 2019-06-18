@@ -15,7 +15,7 @@ namespace Finite.Commands
     {
         private delegate (bool, object) ParserFunc(ReadOnlySpan<char> c);
         // A list of default parsers for TryParseObject.
-        private readonly Dictionary<Type, ParserFunc> _defaultParsers
+        private static readonly Dictionary<Type, ParserFunc> _defaultParsers
             = new Dictionary<Type, ParserFunc>()
             {
                 [typeof(sbyte)] = (x) => (sbyte.TryParse(x, out var y), y),
@@ -28,10 +28,9 @@ namespace Finite.Commands
                 [typeof(uint)] = (x) => (uint.TryParse(x, out var y), y),
 
                 [typeof(long)] = (x) => (long.TryParse(x, out var y), y),
-                [typeof(ulong)] = (x) => (ulong.TryParse(x, out var y), y),
-
-                [typeof(string)] = (x) => (true, x.ToString())
+                [typeof(ulong)] = (x) => (ulong.TryParse(x, out var y), y)
             };
+        private static readonly Type _stringType = typeof(string);
 
         /// <summary>
         /// Attempts to deserialize a parameter into a given type
@@ -64,16 +63,47 @@ namespace Finite.Commands
                 result = parsed;
                 return success;
             }
+            else if (paramType == _stringType)
+            {
+                result = value.ToString();
+                return true;
+            }
 
             result = null;
             return false;
         }
 
         /// <summary>
+        /// Dequotes a <see cref="ReadOnlySpan{char}"/> if it is quoted.
+        /// </summary>
+        /// <param name="value">
+        /// The value to dequote.
+        /// </param>
+        /// <param name="result">
+        /// The dequoted string.
+        /// </param>
+        /// <returns>
+        /// <code>true</code> when the input span was quoted.
+        /// </returns>
+        protected virtual bool TryDequoteString(ReadOnlySpan<char> value,
+            out ReadOnlySpan<char> result)
+        {
+            if (value.Length >= 2
+                && IsCompletedQuote(value[0], value[^1]))
+            {
+                result = value.Slice(1..^2);
+                return true;
+            }
+
+            result = default;
+            return false;
+        }
+
+        /// <summary>
         /// Attempts to deserialize the arguments for a given comand match.
         /// </summary>
-        /// <param name="readerFactory">
-        /// The type reader factory to request type readers from.
+        /// <param name="executionContext">
+        /// The execution context for the command.
         /// </param>
         /// <param name="match">
         /// The <see cref="CommandMatch"/> to deserialize arguments for.
@@ -85,10 +115,14 @@ namespace Finite.Commands
         /// A <see cref="bool"/> representing success
         /// </returns>
         protected virtual bool GetArgumentsForMatch(
-            ITypeReaderFactory readerFactory, CommandMatch match,
+            CommandExecutionContext executionContext, CommandMatch match,
             out object[] result)
         {
-            bool TryParseMultiple(ParameterInfo argument, int startPos,
+            var readerFactory =
+                executionContext.CommandService.TypeReaderFactory;
+
+            bool TryParseMultiple(
+                ParameterInfo argument, int startPos,
                 out object[] parsed)
             {
                 var paramType = argument.Type.GetElementType();
@@ -107,12 +141,29 @@ namespace Finite.Commands
                 return true;
             }
 
+            bool TryParseRemainder(
+                string fullMessage,
+                ParameterInfo argument,
+                ReadOnlySpan<char> param,
+                out object parsed)
+            {
+                if (!fullMessage.AsSpan().Overlaps(param, out var offset))
+                {
+                    parsed = null;
+                    return false;
+                }
+
+                return TryParseObject(readerFactory, argument.Type,
+                    fullMessage.AsSpan().Slice(offset), out parsed);
+            }
+
             var parameters = match.Command.Parameters;
             result = new object[parameters.Count];
 
             for (int i = 0; i < parameters.Count; i++)
             {
                 var argument = parameters[i];
+
                 if ((i == parameters.Count - 1) &&
                     argument.Attributes.Any(x => x is ParamArrayAttribute))
                 {
@@ -128,10 +179,22 @@ namespace Finite.Commands
 
                     result[i] = argument.DefaultValue;
                 }
+                else if (argument.Remainder)
+                {
+                    if (!TryParseRemainder(executionContext.Context.Message,
+                        argument, match.Arguments[i].Span, out var remainder))
+                        return false;
+
+                    result[i] = remainder;
+                }
                 else
                 {
+                    var span = match.Arguments[i].Span;
+                    if (TryDequoteString(span, out var tmp))
+                        span = tmp;
+
                     var ok = TryParseObject(readerFactory,
-                        argument.Type, match.Arguments[i].Span, out var value);
+                        argument.Type, span, out var value);
 
                     if (!ok)
                         return false;
@@ -158,7 +221,7 @@ namespace Finite.Commands
             foreach (var match in commands.FindCommands(tokenStream))
             {
                 if (GetArgumentsForMatch(
-                    executionContext.CommandService.TypeReaderFactory,
+                    executionContext,
                     match, out object[] arguments))
                 {
                     // TODO: maybe I should migrate this to a parser result?

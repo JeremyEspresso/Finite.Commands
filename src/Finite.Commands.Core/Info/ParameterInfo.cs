@@ -31,6 +31,11 @@ namespace Finite.Commands
         public bool Optional { get; }
 
         /// <summary>
+        /// Indicates whether this parameter consumes the remainder of the input string or not.
+        /// </summary>
+        public bool Remainder { get; }
+
+        /// <summary>
         /// The default value for this parameter if <see cref="Optional"/> is
         /// set.
         /// </summary>
@@ -44,7 +49,9 @@ namespace Finite.Commands
         internal ParameterInfo(CommandInfo command,
             IReadOnlyCollection<string> aliases,
             IReadOnlyCollection<Attribute> attributes,
-            Type type, bool hasDefault, object defaultValue)
+            Type type,
+            bool hasDefault, object defaultValue,
+            bool isRemainder)
         {
             Attributes = attributes;
             Aliases = aliases;
@@ -52,6 +59,7 @@ namespace Finite.Commands
             Type = type;
             Optional = hasDefault;
             DefaultValue = defaultValue;
+            Remainder = isRemainder;
         }
     }
 }

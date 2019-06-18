@@ -142,6 +142,9 @@ namespace Finite.Commands
                     case AliasAttribute aliases:
                         builder.AddAliases(aliases.Aliases);
                         break;
+                    case RemainderAttribute remainder:
+                        builder.WithRemainder(true);
+                        break;
                     default:
                         builder.AddAttribute(attribute);
                         break;

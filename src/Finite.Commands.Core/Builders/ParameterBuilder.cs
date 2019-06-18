@@ -36,6 +36,11 @@ namespace Finite.Commands
         public bool Optional { get; private set; }
 
         /// <summary>
+        /// Indicates that this command consumes the remainder of the input string
+        /// </summary>
+        public bool Remainder { get; private set; }
+
+        /// <summary>
         /// Specifies the default value when <see cref="Optional"/> is set.
         /// </summary>
         public object DefaultValue { get; private set; }
@@ -115,10 +120,25 @@ namespace Finite.Commands
             return this;
         }
 
+        /// <summary>
+        /// Sets whether the created <see cref="ParameterInfo" /> consumes the remaining input string
+        /// </summary>
+        /// <param name="value">
+        /// <code>true</code> if the parameter consumes the remaining input string
+        /// </param>
+        /// <returns>
+        /// The current instance, for chaining calls.
+        /// </returns>
+        public ParameterBuilder WithRemainder(bool value)
+        {
+            Remainder = value;
+            return this;
+        }
+
         internal ParameterInfo Build(CommandInfo command)
         {
             return new ParameterInfo(command, Aliases, Attributes, Type,
-                Optional, DefaultValue);
+                Optional, DefaultValue, Remainder);
         }
     }
 }

@@ -15,6 +15,8 @@ namespace Finite.Commands.Tests
                 .AddModule<ParserTestModule>()
                 .BuildCommandService();
 
+        
+
         [Fact]
         public void ValidParseWithNoParams()
         {
@@ -40,6 +42,14 @@ namespace Finite.Commands.Tests
             Assert.False(Parse("multiple_required_params 1 a").IsSuccess);
             Assert.True(Parse("multiple_required_params 1 2").IsSuccess);
             Assert.True(Parse("multiple_required_params 1 2 and more").IsSuccess);
+        }
+
+        [Fact]
+        public void ValidParseWithQuotedParams()
+        {
+            Assert.True(Parse("quoted_params abc 1").IsSuccess);
+            Assert.False(Parse("quoted_params oh no 1").IsSuccess);
+            Assert.True(Parse("quoted_params 'this works though' 1").IsSuccess);
         }
 
         [Fact]
@@ -72,6 +82,24 @@ namespace Finite.Commands.Tests
             Assert.True(Parse("multiple_optional_params 1 2 a").IsSuccess);
         }
 
+        [Fact]
+        public void ValidParseWithRemainderParams()
+        {
+            Assert.False(Parse("remainder_param").IsSuccess);
+            Assert.True(Parse("remainder_param a").IsSuccess);
+            Assert.True(Parse("remainder_param 'oh okay this should work'").IsSuccess);
+            Assert.True(Parse("remainder_param ok this should work too").IsSuccess); // fails
+        }
+
+        [Fact]
+        public void ValidParseWithRemainderOptionalParams()
+        {
+            Assert.True(Parse("remainder_optional_param").IsSuccess); // fails
+            Assert.True(Parse("remainder_optional_param a").IsSuccess);
+            Assert.True(Parse("remainder_optional_param 'oh okay this should work'").IsSuccess);
+            Assert.True(Parse("remainder_optional_param ok this should work too").IsSuccess);
+        }
+
         private IResult Parse(string msg)
         {
             var context = new TestContext()
@@ -97,6 +125,10 @@ namespace Finite.Commands.Tests
             public Task MultipleRequiredParams(int param, long otherParam)
                 => Task.CompletedTask;
 
+            [Command("quoted_params")]
+            public Task QuotedParams(string param1, int param2)
+                => Task.CompletedTask;
+
             [Command("an_array_of_params")]
             public Task AnArrayOfParams(params int[] parameters)
                 => Task.CompletedTask;
@@ -107,6 +139,14 @@ namespace Finite.Commands.Tests
 
             [Command("multiple_optional_params")]
             public Task MultipleOptionalParams(int really = 1337, long spooky = 5)
+                => Task.CompletedTask;
+
+            [Command("remainder_param")]
+            public Task RemainderParam([Remainder]string message)
+                => Task.CompletedTask;
+
+            [Command("remainder_optional_param")]
+            public Task RemainderOptionalParam([Remainder]string message = "nerds")
                 => Task.CompletedTask;
         }
     }
