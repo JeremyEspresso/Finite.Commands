@@ -89,9 +89,9 @@ namespace Finite.Commands
             out ReadOnlySpan<char> result)
         {
             if (value.Length >= 2
-                && IsCompletedQuote(value[0], value[^1]))
+                && IsCompletedQuote(value[0], value[value.Length - 1]))
             {
-                result = value.Slice(1..^1);
+                result = value.Slice(1, value.Length - 2);
                 return true;
             }
 
