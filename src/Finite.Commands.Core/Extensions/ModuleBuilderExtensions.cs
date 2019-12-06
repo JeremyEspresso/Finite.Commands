@@ -49,7 +49,7 @@ namespace Finite.Commands.Extensions
         public static ModuleBuilder AddCommand(this ModuleBuilder @this,
             Action<CommandBuilder> builderFunc)
         {
-            var command = new CommandBuilder(null);
+            var command = new CommandBuilder();
             builderFunc(command);
 
             if (command.Callback == null)

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Finite.Commands
@@ -21,7 +22,7 @@ namespace Finite.Commands
         private bool _addedParser = false,
             _addedReaders = false;
 
-        private Func<ITypeReaderFactory> _typeReaderFactory;
+        private Func<ITypeReaderFactory>? _typeReaderFactory;
 
         /// <summary>
         /// Creates a new <see cref="CommandServiceBuilder{TContext}"/>
@@ -67,8 +68,8 @@ namespace Finite.Commands
 
             _pipelines.Add(async (ctx, next) =>
             {
-                var pipeline = factory(ctx.ServiceProvider,
-                    Array.Empty<object>()) as TPipeline;
+                var pipeline = (TPipeline)factory(ctx.ServiceProvider,
+                    Array.Empty<object>());
 
                 try
                 {
@@ -91,7 +92,7 @@ namespace Finite.Commands
         /// The parser to add.
         /// </typeparam>
         /// <returns>
-        /// Returns a <see cref="ICommandServiceBuilder{TContext}"/> for
+        /// Returns a <see cref="CommandServiceBuilder{TContext}"/> for
         /// chaining calls.
         /// </returns>
         public CommandServiceBuilder<TContext> AddCommandParser<TParser>()
@@ -107,8 +108,8 @@ namespace Finite.Commands
 
             _pipelines.Add(async (ctx, next) =>
             {
-                var parser = factory(ctx.ServiceProvider,
-                    Array.Empty<object>()) as TParser;
+                var parser = (TParser)factory(ctx.ServiceProvider,
+                    Array.Empty<object>());
 
                 try
                 {
@@ -135,7 +136,7 @@ namespace Finite.Commands
         /// The factory to add.
         /// </typeparam>
         /// <returns>
-        /// Returns a <see cref="ICommandServiceBuilder{TContext}"/> for
+        /// Returns a <see cref="CommandServiceBuilder{TContext}"/> for
         /// chaining calls.
         /// </returns>
         public CommandServiceBuilder<TContext> AddTypeReaderFactory<TFactory>()
@@ -160,7 +161,7 @@ namespace Finite.Commands
         /// The builder function for the factory
         /// </param>
         /// <returns>
-        /// Returns a <see cref="ICommandServiceBuilder{TContext}"/> for
+        /// Returns a <see cref="CommandServiceBuilder{TContext}"/> for
         /// chaining calls.
         /// </returns>
         public CommandServiceBuilder<TContext> AddTypeReaderFactory<TFactory>(Func<TFactory> createFunc)
@@ -244,7 +245,11 @@ namespace Finite.Commands
             if (!_addedReaders)
                 throw new InvalidOperationException("A type reader factory is needed");
 
-            return new CommandService<TContext>(_pipelines, _modules, _typeReaderFactory());
+            // Should never occur unless state is very corrupt
+            Debug.Assert(_typeReaderFactory != null);
+
+            return new CommandService<TContext>(_pipelines, _modules,
+                _typeReaderFactory());
         }
     }
 }

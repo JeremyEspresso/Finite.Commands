@@ -11,6 +11,9 @@ namespace Finite.Commands
     public abstract class ModuleBase<TContext>
         where TContext : class, ICommandContext
     {
+#pragma warning disable CS8618
+        // These properties are always initialized, but at a later point
+
         /// <summary>
         /// The contextual data passed to the command, such as message author
         /// and message content.
@@ -21,6 +24,7 @@ namespace Finite.Commands
         /// The command service owning this module.
         /// </summary>
         public CommandService<TContext> Commands { get; private set; }
+#pragma warning restore CS8618
 
         /// <summary>
         /// A callback executed when the module is about to execute a command.

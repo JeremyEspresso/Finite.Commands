@@ -108,7 +108,7 @@ namespace Finite.Commands.Tests
             };
 
             return Parser.Parse(
-                new CommandExecutionContext(Service, context, null));
+                new CommandExecutionContext(Service, context, null!));
         }
 
         public class ParserTestModule : ModuleBase<TestContext>

@@ -39,6 +39,18 @@ namespace Finite.Commands
         /// </summary>
         public CommandCallback Callback { get; set; }
 
+
+#pragma warning disable CS8618
+        // This constructor is only used by command builders and the public
+        // ctor.
+        internal CommandBuilder()
+        {
+            _aliases = new List<string>();
+            _attributes = new List<Attribute>();
+            _parameters = new List<ParameterBuilder>();
+        }
+#pragma warning restore CS8618
+
         /// <summary>
         /// Creates a new <see cref="CommandBuilder"/> with the specified
         /// callback.
@@ -47,11 +59,8 @@ namespace Finite.Commands
         /// The callback which is executed when the command is invoked.
         /// </param>
         public CommandBuilder(CommandCallback callback)
+            : this()
         {
-            _aliases = new List<string>();
-            _attributes = new List<Attribute>();
-            _parameters = new List<ParameterBuilder>();
-
             Callback = callback;
         }
 
@@ -127,7 +136,7 @@ namespace Finite.Commands
             where TContext : class, ICommandContext
             => Build(null, typeof(TContext));
 
-        internal CommandInfo Build(ModuleInfo module, Type contextType)
+        internal CommandInfo Build(ModuleInfo? module, Type contextType)
         {
             return new CommandInfo(module, contextType, Callback,
                 Aliases, Attributes, Parameters);

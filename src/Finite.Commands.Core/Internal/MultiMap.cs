@@ -1,11 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace Finite.Commands
 {
     internal sealed class MultiMap<TKey, TValue>
         : ILookup<TKey, TValue>
+        where TKey : notnull
     {
         private readonly Dictionary<TKey, List<TValue>> _members;
 
@@ -35,9 +37,10 @@ namespace Finite.Commands
         IEnumerator IEnumerable.GetEnumerator()
             => GetEnumerator();
 
-        public bool TryGetValues(TKey key, out ICollection<TValue> values)
+        public bool TryGetValues(TKey key,
+            [NotNullWhen(true)]out ICollection<TValue>? values)
         {
-            if (_members.TryGetValue(key, out List<TValue> temp))
+            if (_members.TryGetValue(key, out var temp))
             {
                 values = temp;
                 return true;

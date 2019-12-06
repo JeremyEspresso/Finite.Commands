@@ -25,6 +25,7 @@ namespace System.Collections.Generic
         /// </returns>
         public static bool TryAdd<TKey, TValue>(
             this Dictionary<TKey, TValue> @this, TKey key, TValue value)
+            where TKey : notnull
         {
             if (@this.ContainsKey(key))
                 return false;
@@ -58,6 +59,7 @@ namespace System.Collections.Generic
         public static TValue GetOrAdd<TKey, TValue>(
             this Dictionary<TKey, TValue> @this,
             TKey key, Func<TKey, TValue> valueFactory)
+            where TKey : notnull
         {
             if (@this.TryGetValue(key, out TValue value))
                 return value;
@@ -94,6 +96,7 @@ namespace System.Collections.Generic
         public static bool TryRemove<TKey, TValue>(
             this Dictionary<TKey, TValue> @this,
             TKey key, out TValue value)
+            where TKey : notnull
         {
             if (@this.TryGetValue(key, out value))
             {

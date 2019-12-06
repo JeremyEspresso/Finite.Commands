@@ -7,7 +7,7 @@ namespace Finite.Commands.Tests
     public class CommandMapTests
     {
         private static CommandInfo CreateCommand()
-            => new CommandInfo(null, null, null, null, null,
+            => new CommandInfo(null, null!, null!, null!, null!,
                 Array.Empty<ParameterBuilder>());
 
         [Theory]
@@ -60,7 +60,7 @@ namespace Finite.Commands.Tests
             var commands = map.GetCommands(searchPath);
             Assert.NotNull(commands);
             var commandsArray = commands.ToArray();
-            Assert.Equal(commandsArray.Length, 2);
+            Assert.Equal(2, commandsArray.Length);
 
             commands = map.GetCommands(invalidSearchPath);
             Assert.NotNull(commands);
@@ -70,35 +70,35 @@ namespace Finite.Commands.Tests
 
         [Theory]
         [InlineData(
-            new string[]{"module", "module stat", "module stats"},
+            new string[] { "module", "module stat", "module stats" },
             "module",
             1)]
         [InlineData(
-            new string[]{"module", "module stat", "module stats"},
+            new string[] { "module", "module stat", "module stats" },
             "module ThisIsAnArgument",
             1)]
         [InlineData(
-            new string[]{"module", "module stat", "module stats"},
+            new string[] { "module", "module stat", "module stats" },
             "module stat",
             2)]
         [InlineData(
-            new string[]{"module", "module stat", "module stats"},
+            new string[] { "module", "module stat", "module stats" },
             "module stat ThisIsAnArgument",
             2)]
         [InlineData(
-            new string[]{"module", "module stat", "module stats"},
+            new string[] { "module", "module stat", "module stats" },
             "module stats",
             2)]
         [InlineData(
-            new string[]{"module", "module stat", "module stats"},
+            new string[] { "module", "module stat", "module stats" },
             "module stats ThisIsAnArgument",
             2)]
         [InlineData(
-            new string[]{"module", "module stat", "module stats"},
+            new string[] { "module", "module stat", "module stats" },
             "unrelated",
             0)]
         [InlineData(
-            new string[]{"module", "module stat", "module stats"},
+            new string[] { "module", "module stat", "module stats" },
             "",
             0)]
         public void FindCommandsDefaultAlias(string[] aliases,

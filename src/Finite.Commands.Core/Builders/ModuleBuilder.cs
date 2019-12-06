@@ -126,7 +126,7 @@ namespace Finite.Commands
             where TContext : class, ICommandContext
             => Build(null, typeof(TContext));
 
-        internal ModuleInfo Build(ModuleInfo parent, Type contextType)
+        internal ModuleInfo Build(ModuleInfo? parent, Type contextType)
         {
             return new ModuleInfo(parent, contextType,
                 Aliases, Attributes, Submodules, Commands);

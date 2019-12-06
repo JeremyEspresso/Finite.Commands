@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -21,7 +22,7 @@ namespace Finite.Commands
         private static readonly TypeInfo ModuleBaseTypeInfo =
             typeof(ModuleBase<TContext>).GetTypeInfo();
         private static readonly MethodInfo OnBuildingCallbackMethodInfo =
-            typeof(OnBuildingCallback).GetMethod("Invoke");
+            typeof(OnBuildingCallback).GetMethod("Invoke")!;
 
         private static readonly ConcurrentDictionary<Type,
             Func<Task, IResult>> _compiledResultGetters =
@@ -127,13 +128,12 @@ namespace Finite.Commands
         private static ParameterBuilder BuildParameter(
             System.Reflection.ParameterInfo parameter)
         {
-            var builder = new ParameterBuilder(parameter.Name);
+            var builder = new ParameterBuilder(parameter.Name!,
+                parameter.ParameterType);
             var attributes = parameter.GetCustomAttributes();
 
-            builder.WithType(parameter.ParameterType);
-
             if (parameter.IsOptional || parameter.HasDefaultValue)
-                builder.WithDefaultValue(parameter.DefaultValue);
+                builder.WithDefaultValue(parameter.DefaultValue!);
 
             foreach (var attribute in attributes)
             {
@@ -142,7 +142,7 @@ namespace Finite.Commands
                     case AliasAttribute aliases:
                         builder.AddAliases(aliases.Aliases);
                         break;
-                    case RemainderAttribute remainder:
+                    case RemainderAttribute _:
                         builder.WithRemainder(true);
                         break;
                     default:
@@ -161,15 +161,15 @@ namespace Finite.Commands
 
             var invoker = CreateMethodInvoker(method);
 
-            Func<Task, IResult> resultGetter = null;
+            Func<Task, IResult>? resultGetter = null;
             if (NonGenericTaskTypeInfo.IsAssignableFrom(method.ReturnType))
                 resultGetter = _compiledResultGetters.GetOrAdd(
                     method.ReturnType, CreateResultGetter);
 
             return async (command, context, commands, services, arguments) =>
             {
-                var module = factory(services, Array.Empty<object>())
-                    as ModuleBase<TContext>;
+                var module = (ModuleBase<TContext>)factory(services,
+                    Array.Empty<object>());
 
                 module.SetCommands(commands);
                 module.SetContext(context);
@@ -190,6 +190,8 @@ namespace Finite.Commands
                         return SuccessResult.Instance;
 
                     await task;
+
+                    Debug.Assert(resultGetter != null);
 
                     return resultGetter(task);
                 }
@@ -217,7 +219,7 @@ namespace Finite.Commands
                     .Compile();
         }
 
-        private static Func<ModuleBase<TContext>, object[], object>
+        private static Func<ModuleBase<TContext>, object?[], object>
             CreateMethodInvoker(MethodInfo method)
         {
             // Creates a lambda function which looks similar to this:
@@ -234,7 +236,7 @@ namespace Finite.Commands
                     p.ParameterType));
 
             return Expression
-                .Lambda<Func<ModuleBase<TContext>, object[], object>>(
+                .Lambda<Func<ModuleBase<TContext>, object?[], object>>(
                     Expression.Convert(
                         Expression.Call(
                             Expression.Convert(target, method.DeclaringType),
@@ -244,14 +246,14 @@ namespace Finite.Commands
                 .Compile();
         }
 
-        private static OnBuildingCallback
+        private static OnBuildingCallback?
             GetOnBuildingCallback(TypeInfo type)
         {
             var methods = type.GetMethods(
                 BindingFlags.Public | BindingFlags.Static)
                 .Where(IsValidOnBuildingDefinition)
-                .Select(method => method.CreateDelegate(
-                    typeof(OnBuildingCallback)) as OnBuildingCallback)
+                .Select(method => (OnBuildingCallback)method
+                    .CreateDelegate(typeof(OnBuildingCallback)))
                 .ToArray();
 
             if (methods.Length > 0)

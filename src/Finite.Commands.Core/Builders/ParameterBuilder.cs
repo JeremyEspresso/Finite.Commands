@@ -43,20 +43,44 @@ namespace Finite.Commands
         /// <summary>
         /// Specifies the default value when <see cref="Optional"/> is set.
         /// </summary>
-        public object DefaultValue { get; private set; }
+        public object? DefaultValue { get; private set; }
 
         /// <summary>
-        /// Creates a new <see cref="ParameterBuilder"/> with the given name.
+        /// Creates a new <see cref="ParameterBuilder"/> with the given name
+        /// and type.
         /// </summary>
         /// <param name="name">
         /// The name of the parameter.
         /// </param>
-        public ParameterBuilder(string name)
+        /// <param name="type">
+        /// The type of the parameter.
+        /// </param>
+        public ParameterBuilder(string name, Type type)
         {
             _aliases = new List<string>();
             _attributes = new List<Attribute>();
 
+            Type = type;
+
             _aliases.Add(name);
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="ParameterBuilder"/> with the given name
+        /// and type.
+        /// </summary>
+        /// <param name="name">
+        /// The name of the parameter.
+        /// </param>
+        /// <typeparam name="TParameter">
+        /// The type of parameter to use.
+        /// </typeparam>
+        /// <returns>
+        /// A <see cref="ParameterBuilder"/> with the given name and type.
+        /// </returns>
+        public static ParameterBuilder Create<TParameter>(string name)
+        {
+            return new ParameterBuilder(name, typeof(TParameter));
         }
 
         /// <summary>

@@ -8,7 +8,7 @@ namespace Finite.Commands
     {
         private readonly CommandMapNode _root;
 
-        public CommandMap(IReadOnlyList<ModuleInfo> modules = null)
+        public CommandMap(IReadOnlyList<ModuleInfo>? modules = null)
         {
             _root = new CommandMapNode();
 

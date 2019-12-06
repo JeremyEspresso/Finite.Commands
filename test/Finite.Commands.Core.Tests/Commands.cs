@@ -4,8 +4,8 @@ namespace Finite.Commands.Tests
 {
     public class TestContext : ICommandContext
     {
-        public string Message { get; set; }
-        public string Author { get; set; }
+        public string Message { get; set; } = null!;
+        public string Author { get; set; } = null!;
     }
 
     public class TestResultUnsuccessful : IResult

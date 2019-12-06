@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Finite.Commands
@@ -27,7 +28,7 @@ namespace Finite.Commands
     /// </returns>
     public delegate Task<IResult> CommandCallback(CommandInfo command,
         ICommandContext context, ICommandService commands,
-        IServiceProvider services, object[] arguments);
+        IServiceProvider services, object?[] arguments);
 
     /// <summary>
     /// A callback invoked when a module is being built.

@@ -12,11 +12,23 @@ namespace Finite.Commands.Extensions
     public static class CommandServiceBuilderExtensions
     {
         /// <summary>
-        /// Looks up all modules in the current assembly and loads them into the CommandServiceBuilder
+        /// Looks up all modules in the current assembly and loads them into
+        /// the CommandServiceBuilder.
         /// </summary>
-        /// <typeparam name="TContext">The <see cref="ICommandContext{TContext}"/> of the CommandServiceBuilder</typeparam>
-        /// <param name="assembly">Use <see cref="Assembly.GetEntryAssembly"/>.</param>
-        /// <returns>The modified <see cref="CommandServiceBuilder{TContext}"/> for chaining.</returns>
+        /// <typeparam name="TContext">
+        /// The <see cref="ICommandContext"/> of the CommandServiceBuilder.
+        /// </typeparam>
+        /// <param name="builder">
+        /// The <see cref="CommandServiceBuilder{TContext}"/> to add commands
+        /// to.
+        /// </param>
+        /// <param name="assembly">
+        /// The assembly to add modules from.
+        /// </param>
+        /// <returns>
+        /// The modified <see cref="CommandServiceBuilder{TContext}"/> for
+        /// chaining.
+        /// </returns>
         public static CommandServiceBuilder<TContext> AddModules<TContext>(this CommandServiceBuilder<TContext> builder, Assembly assembly)
             where TContext : class, ICommandContext
         {

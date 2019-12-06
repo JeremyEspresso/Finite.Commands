@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Finite.Commands;
@@ -28,13 +29,14 @@ namespace Finite.Commands.Tests
         }
 
         [Fact]
-        public void BuildModule()
+        public async Task BuildModuleAsync()
         {
             var module = ClassBuilder
                 .Build<ValidTestModule, TestContext>();
 
             Assert.Empty(module.Aliases);
-            Assert.Empty(module.Attributes);
+            // NullableContext and NullableAttribute
+            Assert.Equal(2, module.Attributes.Count);
             Assert.Empty(module.Submodules);
 
             var cmd = Assert.Single(module.Commands);
@@ -43,23 +45,23 @@ namespace Finite.Commands.Tests
             Assert.Empty(cmd.Attributes);
             Assert.Equal(module, cmd.Module);
 
-            var result = cmd.ExecuteAsync(Context, null, null, new object[]{})
-                    .GetAwaiter().GetResult();
+            var result = await cmd.ExecuteAsync(Context, null!, null!,
+                Array.Empty<object>());
 
             Assert.NotNull(result);
             Assert.True(result.IsSuccess);
         }
 
         [Fact]
-        public void CommandCallbacks()
+        public async Task CommandCallbacksAsync()
         {
             var module = ClassBuilder
                 .Build<ModuleBuildTestModule, TestContext>();
 
             foreach (var cmd in module.Commands)
             {
-                var result = cmd.ExecuteAsync(Context, null, null, new object[]{})
-                    .GetAwaiter().GetResult();
+                var result = await cmd.ExecuteAsync(Context, null!, null!,
+                    Array.Empty<object>());
 
                 switch (cmd.Aliases.First())
                 {
@@ -73,12 +75,12 @@ namespace Finite.Commands.Tests
                         break;
                     case "Task<TestResultUnsuccessful>":
                         Assert.NotNull(result);
-                        Assert.IsType(typeof(TestResultUnsuccessful), result);
+                        Assert.IsType<TestResultUnsuccessful>(result);
                         Assert.False(result.IsSuccess);
                         break;
                     case "Task<TestResultSuccessful>":
                         Assert.NotNull(result);
-                        Assert.IsType(typeof(TestResultSuccessful), result);
+                        Assert.IsType<TestResultSuccessful>(result);
                         Assert.True(result.IsSuccess);
                         break;
                 }
@@ -93,18 +95,18 @@ namespace Finite.Commands.Tests
 
             [Command("Task<ICommandResult>")]
             public Task<IResult> TestCommandReturningTaskICommandResult()
-                => Task.FromResult<IResult>(null);
+                => Task.FromResult<IResult>(null!);
 
             [Command("Task<TestResultUnsuccessful>")]
             public Task<TestResultUnsuccessful>
                 TestCommandReturningTaskTestResultUnsuccessful()
-                => Task.FromResult<TestResultUnsuccessful>(
+                => Task.FromResult(
                     new TestResultUnsuccessful());
 
             [Command("Task<TestResultSuccessful>")]
             public Task<TestResultSuccessful>
                 TestCommandReturningTaskTestResultSuccessful()
-                => Task.FromResult<TestResultSuccessful>(
+                => Task.FromResult(
                     new TestResultSuccessful());
         }
     }

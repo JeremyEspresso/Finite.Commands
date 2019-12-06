@@ -29,8 +29,11 @@ namespace Discord.Addons.Finite.Commands
         /// <summary>
         /// Gets the guild that the command was executed in.
         /// </summary>
-        public SocketGuild Guild { get; }
+        public SocketGuild? Guild { get; }
 
+        /// <summary>
+        /// Gets a value representing whether the channel is private or not
+        /// </summary>
         public bool IsPrivate => Channel is IPrivateChannel;
 
         /// <summary>
@@ -38,10 +41,10 @@ namespace Discord.Addons.Finite.Commands
         /// given client and message.
         /// </summary>
         /// <param name="client">
-        /// The <see cref="Discord.WebSocket.DiscordSocketClient" /> to use.
+        /// The <see cref="DiscordSocketClient" /> to use.
         /// </param>
         /// <param name="message">
-        /// The <see cref="Discord.WebSocket.SocketMessage" /> to use.
+        /// The <see cref="SocketMessage" /> to use.
         /// </param>
         public SocketCommandContext(DiscordSocketClient client,
             SocketMessage message)

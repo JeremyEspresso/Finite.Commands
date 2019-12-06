@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Finite.Commands
 {
@@ -15,7 +16,7 @@ namespace Finite.Commands
         /// <summary>
         /// The command which is to be executed by this execution.
         /// </summary>
-        public CommandInfo Command { get; set; }
+        public CommandInfo? Command { get; set; }
 
         /// <summary>
         /// The length of the prefix of this message. These many characters
@@ -36,7 +37,7 @@ namespace Finite.Commands
         /// <summary>
         /// The arguments passed to the command when executed.
         /// </summary>
-        public object[] Arguments { get; set; }
+        public object?[] Arguments { get; set; }
 
         internal CommandExecutionContext(
             ICommandService commands,
@@ -46,6 +47,8 @@ namespace Finite.Commands
             CommandService = commands;
             Context = context;
             ServiceProvider = services;
+
+            Arguments = Array.Empty<object?>();
         }
     }
 }

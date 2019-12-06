@@ -27,14 +27,14 @@ namespace Finite.Commands
         /// <summary>
         /// The parent module of this command.
         /// </summary>
-        public ModuleInfo Module { get; }
+        public ModuleInfo? Module { get; }
 
         /// <summary>
         /// The type of context this command supports.
         /// </summary>
         public Type ContextType { get; }
 
-        internal CommandInfo(ModuleInfo module,
+        internal CommandInfo(ModuleInfo? module,
             Type contextType,
             CommandCallback callback,
             IReadOnlyCollection<string> aliases,
@@ -78,7 +78,7 @@ namespace Finite.Commands
         /// </returns>
         internal async Task<IResult> ExecuteAsync(
             ICommandContext context, ICommandService commands,
-            IServiceProvider services, object[] args)
+            IServiceProvider services, object?[] args)
         {
             return await _callback(this, context, commands, services, args)
                 .ConfigureAwait(false);

@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -51,7 +53,8 @@ namespace Finite.Commands
         /// A boolean indicating whether the parse was successful or not
         /// </returns>
         protected virtual bool TryParseObject(ITypeReaderFactory readerFactory,
-            Type paramType, ReadOnlySpan<char> value, out object result)
+            Type paramType, ReadOnlySpan<char> value,
+            [NotNullWhen(true)]out object? result)
         {
             if (readerFactory.TryGetTypeReader(paramType, out var reader))
             {
@@ -74,7 +77,7 @@ namespace Finite.Commands
         }
 
         /// <summary>
-        /// Dequotes a <see cref="ReadOnlySpan{char}"/> if it is quoted.
+        /// Dequotes a <see cref="ReadOnlySpan{T}"/> if it is quoted.
         /// </summary>
         /// <param name="value">
         /// The value to dequote.
@@ -116,46 +119,10 @@ namespace Finite.Commands
         /// </returns>
         protected virtual bool GetArgumentsForMatch(
             CommandExecutionContext executionContext, CommandMatch match,
-            out object[] result)
+            out object?[] result)
         {
             var readerFactory =
                 executionContext.CommandService.TypeReaderFactory;
-
-            bool TryParseMultiple(
-                ParameterInfo argument, int startPos,
-                out object[] parsed)
-            {
-                var paramType = argument.Type.GetElementType();
-                parsed = new object[match.Arguments.Length - startPos];
-                for (int i = startPos; i < match.Arguments.Length; i++)
-                {
-                    var ok = TryParseObject(readerFactory,
-                        paramType, match.Arguments[i].Span, out var value);
-
-                    if (!ok)
-                        return false;
-
-                    parsed[i - startPos] = value;
-                }
-
-                return true;
-            }
-
-            bool TryParseRemainder(
-                string fullMessage,
-                ParameterInfo argument,
-                ReadOnlySpan<char> param,
-                out object parsed)
-            {
-                if (!fullMessage.AsSpan().Overlaps(param, out var offset))
-                {
-                    parsed = null;
-                    return false;
-                }
-
-                return TryParseObject(readerFactory, argument.Type,
-                    fullMessage.AsSpan().Slice(offset), out parsed);
-            }
 
             var parameters = match.Command.Parameters;
             result = new object[parameters.Count];
@@ -177,7 +144,7 @@ namespace Finite.Commands
                     if (!argument.Optional)
                         return false;
 
-                    result[i] = argument.DefaultValue;
+                    result[i] = argument.DefaultValue!;
                 }
                 else if (argument.Remainder)
                 {
@@ -204,6 +171,46 @@ namespace Finite.Commands
             }
 
             return true;
+
+            bool TryParseMultiple(
+                ParameterInfo argument, int startPos,
+                out object?[] parsed)
+            {
+                var paramType = argument.Type.GetElementType();
+                Debug.Assert(paramType != null);
+
+                parsed = new object[match.Arguments.Length - startPos];
+                for (int i = startPos; i < match.Arguments.Length; i++)
+                {
+                    var ok = TryParseObject(readerFactory,
+                        paramType, match.Arguments[i].Span, out var value);
+
+                    if (!ok)
+                        return false;
+
+                    parsed[i - startPos] = value;
+                }
+
+                return true;
+            }
+
+            bool TryParseRemainder(
+                string fullMessage,
+                ParameterInfo argument,
+                ReadOnlySpan<char> param,
+                out object parsed)
+            {
+                // Use damnit operator here as we can't use attributes in local
+                // functions.
+                if (!fullMessage.AsSpan().Overlaps(param, out var offset))
+                {
+                    parsed = null!;
+                    return false;
+                }
+
+                return TryParseObject(readerFactory, argument.Type,
+                    fullMessage.AsSpan().Slice(offset), out parsed!);
+            }
         }
 
         /// <inheritdoc/>
@@ -215,14 +222,14 @@ namespace Finite.Commands
             if (!result.IsSuccess)
                 return result;
 
-            ReadOnlyMemory<char>[] tokenStream = result.TokenStream;
+            ReadOnlyMemory<char>[] tokenStream = result.TokenStream!;
             var commands = executionContext.CommandService;
 
             foreach (var match in commands.FindCommands(tokenStream))
             {
                 if (GetArgumentsForMatch(
                     executionContext,
-                    match, out object[] arguments))
+                    match, out object?[] arguments))
                 {
                     // TODO: maybe I should migrate this to a parser result?
                     executionContext.Command = match.Command;

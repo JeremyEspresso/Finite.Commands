@@ -12,12 +12,12 @@ namespace Finite.Commands
         /// <summary>
         /// The parsed token stream, when successful, or null otherwise.
         /// </summary>
-        public ReadOnlyMemory<char>[] TokenStream { get; }
+        public ReadOnlyMemory<char>[]? TokenStream { get; }
 
         /// <summary>
         /// The input string which caused the error, or null otherwise.
         /// </summary>
-        public string InputString { get; }
+        public string? InputString { get; }
 
         /// <summary>
         /// The position of the input string where the error occured, or null

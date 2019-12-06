@@ -39,7 +39,7 @@ namespace Finite.Commands
         /// The default value for this parameter if <see cref="Optional"/> is
         /// set.
         /// </summary>
-        public object DefaultValue { get; }
+        public object? DefaultValue { get; }
 
         /// <summary>
         /// The parent command of this parameter.
@@ -50,7 +50,7 @@ namespace Finite.Commands
             IReadOnlyCollection<string> aliases,
             IReadOnlyCollection<Attribute> attributes,
             Type type,
-            bool hasDefault, object defaultValue,
+            bool hasDefault, object? defaultValue,
             bool isRemainder)
         {
             Attributes = attributes;

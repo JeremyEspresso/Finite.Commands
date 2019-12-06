@@ -32,14 +32,14 @@ namespace Finite.Commands
         /// <summary>
         /// The parent module of this module.
         /// </summary>
-        public ModuleInfo Module { get; }
+        public ModuleInfo? Module { get; }
 
         /// <summary>
         /// The context type this module supports.
         /// </summary>
         public Type ContextType { get; }
 
-        internal ModuleInfo(ModuleInfo parent,
+        internal ModuleInfo(ModuleInfo? parent,
             Type contextType,
             IReadOnlyCollection<string> aliases,
             IReadOnlyCollection<Attribute> attributes,

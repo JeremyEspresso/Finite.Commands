@@ -93,8 +93,9 @@ namespace Finite.Commands
         {
             var execContext = new CommandExecutionContext(this, context,
                 services);
-            static Task<IResult> ExecuteCommand(CommandExecutionContext ctx)
-                => ctx.Command.ExecuteAsync(ctx);
+
+            return await GetPipelineFunc(execContext, 0)()
+                .ConfigureAwait(false);
 
             Func<Task<IResult>> GetPipelineFunc(
                 CommandExecutionContext ctx, int pos)
@@ -102,16 +103,30 @@ namespace Finite.Commands
                 if (pos >= _pipelines.Count)
                     return () => ExecuteCommand(ctx);
 
-                return () => _pipelines[pos](ctx, GetPipelineFunc(ctx, pos+1));
+                return () => _pipelines[pos](ctx,
+                    GetPipelineFunc(ctx, pos + 1));
             }
 
-            return await GetPipelineFunc(execContext, 0)()
-                .ConfigureAwait(false);
+            static Task<IResult> ExecuteCommand(CommandExecutionContext ctx)
+            {
+                if (ctx.Command is null)
+                    throw new InvalidOperationException(
+                        "Pipeline completed without a valid command");
+
+                return ctx.Command.ExecuteAsync(ctx);
+            }
         }
 
         /// <inheritdoc/>
         Task<IResult> ICommandService.ExecuteAsync(ICommandContext context,
             IServiceProvider services)
-            => ExecuteAsync(context as TContext, services);
+        {
+            if (!(context is TContext contextAsT))
+                throw new ArgumentException(
+                    $"Expected a {typeof(TContext).Name}",
+                    nameof(context));
+
+            return ExecuteAsync(contextAsT, services);
+        }
     }
 }
