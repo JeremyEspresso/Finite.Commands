@@ -7,25 +7,20 @@ namespace Finite.Commands
     /// </summary>
     public sealed class CommandMatch
     {
-        /// <summary>
-        /// Creates a new instance of <see cref="CommandMatch" />
-        /// </summary>
-        /// <param name="command">
-        /// The command which was matched
-        /// </param>
-        /// <param name="arguments">
-        /// The arguments to pass to this command
-        /// </param>
-        /// <param name="path">
-        /// The path of <paramref name="command" /> which was matched
-        /// </param>
-        internal CommandMatch(CommandInfo command, ReadOnlyMemory<char>[] arguments,
-            ReadOnlyMemory<char>[] path)
+        internal CommandMatch(string message, CommandInfo command,
+            IndexSet arguments,
+            IndexSet path)
         {
+            Message = message;
             Command = command;
             Arguments = arguments;
             CommandPath = path;
         }
+
+        /// <summary>
+        /// The message this match was for.
+        /// </summary>
+        public string Message { get; }
 
         /// <summary>
         /// The command matched by this match
@@ -35,11 +30,11 @@ namespace Finite.Commands
         /// <summary>
         /// The list of arguments to pass to this matched command
         /// </summary>
-        public ReadOnlyMemory<char>[] Arguments { get; }
+        public IndexSet Arguments { get; }
 
         /// <summary>
         /// The full path of the command which was matched
         /// </summary>
-        public ReadOnlyMemory<char>[] CommandPath { get; }
+        public IndexSet CommandPath { get; }
     }
 }

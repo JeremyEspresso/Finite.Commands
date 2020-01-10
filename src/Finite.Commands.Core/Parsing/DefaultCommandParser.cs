@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -71,34 +72,13 @@ namespace Finite.Commands
                 result = value.ToString();
                 return true;
             }
-
-            result = null;
-            return false;
-        }
-
-        /// <summary>
-        /// Dequotes a <see cref="ReadOnlySpan{T}"/> if it is quoted.
-        /// </summary>
-        /// <param name="value">
-        /// The value to dequote.
-        /// </param>
-        /// <param name="result">
-        /// The dequoted string.
-        /// </param>
-        /// <returns>
-        /// <code>true</code> when the input span was quoted.
-        /// </returns>
-        protected virtual bool TryDequoteString(ReadOnlySpan<char> value,
-            out ReadOnlySpan<char> result)
-        {
-            if (value.Length >= 2
-                && IsCompletedQuote(value[0], value[value.Length - 1]))
+            else if (paramType.IsArray)
             {
-                result = value.Slice(1, value.Length - 2);
-                return true;
+                return TryParseObject(readerFactory,
+                    paramType.GetElementType()!, value, out result);
             }
 
-            result = default;
+            result = null;
             return false;
         }
 
@@ -121,96 +101,90 @@ namespace Finite.Commands
             CommandExecutionContext executionContext, CommandMatch match,
             out object?[] result)
         {
+            // Bail out early if we have no parameters
+            if (match.Command.Parameters.Count == 0)
+            {
+                result = Array.Empty<object?>();
+                return true;
+            }
+
             var readerFactory =
                 executionContext.CommandService.TypeReaderFactory;
 
             var parameters = match.Command.Parameters;
-            result = new object[parameters.Count];
+            var input = match.Message.AsMemory();
+            result = new object?[parameters.Count];
 
-            for (int i = 0; i < parameters.Count; i++)
+            var position = 0;
+            var argEnumerator = match.Arguments.GetEnumerator();
+            var inputSpan = match.Message.AsSpan();
+
+            while (position < parameters.Count)
             {
-                var argument = parameters[i];
+                var parameter = parameters[position];
+                bool isParamArray = parameter.Attributes
+                    .Any(x => x is ParamArrayAttribute);
 
-                if ((i == parameters.Count - 1) &&
-                    argument.Attributes.Any(x => x is ParamArrayAttribute))
+                List<object?>? paramArrayBuilder = null;
+
+                if (isParamArray)
+                    paramArrayBuilder = new List<object?>();
+
+                var hasArgument = argEnumerator.MoveNext();
+
+                if (!hasArgument
+                    && !isParamArray
+                    && !parameter.Optional)
+                    return false;
+
+                else if (!hasArgument
+                    && !isParamArray
+                    && parameter.Optional)
                 {
-                    if (!TryParseMultiple(argument, i, out var multiple))
-                        return false;
-
-                    result[i] = multiple;
+                    result[position] = parameter.DefaultValue;
+                    position++;
                 }
-                else if (i >= match.Arguments.Length)
-                {
-                    if (!argument.Optional)
-                        return false;
 
-                    result[i] = argument.DefaultValue!;
+                else if (hasArgument)
+                {
+                    do
+                    {
+                        var range = argEnumerator.Current;
+
+                        if (parameter.Remainder)
+                        {
+                            range = range.Start..^0;
+                        }
+
+                        var value = inputSpan[range];
+                        var parsedObject = parameter.DefaultValue;
+
+                        if (!TryParseObject(readerFactory, parameter.Type, value,
+                            out parsedObject))
+                            return false;
+
+                        if (isParamArray)
+                        {
+                            paramArrayBuilder!.Add(parsedObject);
+                        }
+                        else
+                        {
+                            result[position] = parsedObject;
+                            position++;
+                            break;
+                        }
+                    }
+                    while (argEnumerator.MoveNext());
                 }
-                else if (argument.Remainder)
+
+                if (isParamArray)
                 {
-                    if (!TryParseRemainder(executionContext.Context.Message,
-                        argument, match.Arguments[i].Span, out var remainder))
-                        return false;
-
-                    result[i] = remainder;
-                }
-                else
-                {
-                    var span = match.Arguments[i].Span;
-                    if (TryDequoteString(span, out var tmp))
-                        span = tmp;
-
-                    var ok = TryParseObject(readerFactory,
-                        argument.Type, span, out var value);
-
-                    if (!ok)
-                        return false;
-
-                    result[i] = value;
+                    result[position] = paramArrayBuilder!.ToArray();
+                    position++;
                 }
             }
 
             return true;
-
-            bool TryParseMultiple(
-                ParameterInfo argument, int startPos,
-                out object?[] parsed)
-            {
-                var paramType = argument.Type.GetElementType();
-                Debug.Assert(paramType != null);
-
-                parsed = new object[match.Arguments.Length - startPos];
-                for (int i = startPos; i < match.Arguments.Length; i++)
-                {
-                    var ok = TryParseObject(readerFactory,
-                        paramType, match.Arguments[i].Span, out var value);
-
-                    if (!ok)
-                        return false;
-
-                    parsed[i - startPos] = value;
-                }
-
-                return true;
-            }
-
-            bool TryParseRemainder(
-                string fullMessage,
-                ParameterInfo argument,
-                ReadOnlySpan<char> param,
-                out object parsed)
-            {
-                // Use damnit operator here as we can't use attributes in local
-                // functions.
-                if (!fullMessage.AsSpan().Overlaps(param, out var offset))
-                {
-                    parsed = null!;
-                    return false;
-                }
-
-                return TryParseObject(readerFactory, argument.Type,
-                    fullMessage.AsSpan().Slice(offset), out parsed!);
-            }
         }
 
         /// <inheritdoc/>
@@ -222,10 +196,9 @@ namespace Finite.Commands
             if (!result.IsSuccess)
                 return result;
 
-            ReadOnlyMemory<char>[] tokenStream = result.TokenStream!;
             var commands = executionContext.CommandService;
 
-            foreach (var match in commands.FindCommands(tokenStream))
+            foreach (var match in commands.FindCommands(result))
             {
                 if (GetArgumentsForMatch(
                     executionContext,

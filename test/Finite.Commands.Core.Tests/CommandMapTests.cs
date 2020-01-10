@@ -34,21 +34,21 @@ namespace Finite.Commands.Tests
 
         [Theory]
         [InlineData(
-            new string[]{"nested", "command"},
-            new string[]{"nested"},
-            new string[]{"nested", "command"},
-            new string[]{"not", "a", "command"})]
-        public void FindCommands(string[] command1PathStr,
-            string[] command2PathStr, string[] searchPathStr,
-            string[] invalidSearchPathStr)
+            "nested command",
+            "nested",
+            "nested command",
+            "not a command")]
+        public void FindCommands(string command1PathStr,
+            string command2PathStr, string searchPathStr,
+            string invalidSearchPathStr)
         {
-            var command1Path = command1PathStr
+            var command1Path = command1PathStr.Split(' ')
                 .Select(x => x.AsMemory()).ToArray();
-            var command2Path = command2PathStr
+            var command2Path = command2PathStr.Split(' ')
                 .Select(x => x.AsMemory()).ToArray();
-            var searchPath = searchPathStr
+            var searchPath = searchPathStr.Split(' ')
                 .Select(x => x.AsMemory()).ToArray();
-            var invalidSearchPath = invalidSearchPathStr
+            var invalidSearchPath = invalidSearchPathStr.Split(' ')
                 .Select(x => x.AsMemory()).ToArray();
             var map = new CommandMap();
             var testCommand = CreateCommand();
@@ -57,12 +57,17 @@ namespace Finite.Commands.Tests
             Assert.True(map.AddCommand(command1Path, testCommand));
             Assert.True(map.AddCommand(command2Path, testCommand2));
 
-            var commands = map.GetCommands(searchPath);
+            // TODO: rewrite this to not rely on the parser
+            var parser = new DefaultCommandParser<TestContext>();
+            var tokenizedSearchPath = parser.Tokenize(searchPathStr, 0);
+            var tokenizedInvalidPath = parser.Tokenize(invalidSearchPathStr, 0);
+
+            var commands = map.GetCommands(tokenizedSearchPath);
             Assert.NotNull(commands);
             var commandsArray = commands.ToArray();
             Assert.Equal(2, commandsArray.Length);
 
-            commands = map.GetCommands(invalidSearchPath);
+            commands = map.GetCommands(tokenizedInvalidPath);
             Assert.NotNull(commands);
             commandsArray = commands.ToArray();
             Assert.Empty(commandsArray);
@@ -115,9 +120,11 @@ namespace Finite.Commands.Tests
                 Assert.True(map.AddCommand(path, testCommand));
             }
 
-            var commands = map.GetCommands(
-                searchQuery.Split(' ')
-                    .Select(x => x.AsMemory()).ToArray());
+            // TODO: rewrite this to not rely on the parser
+            var parser = new DefaultCommandParser<TestContext>();
+            var tokenized = parser.Tokenize(searchQuery, 0);
+
+            var commands = map.GetCommands(tokenized);
             Assert.NotNull(commands);
 
             var commandsArray = commands.ToArray();

@@ -66,12 +66,12 @@ namespace Finite.Commands
         }
 
         /// <inheritdoc/>
-        public IEnumerable<CommandMatch> FindCommands(ReadOnlyMemory<char>[] fullPath)
+        public IEnumerable<CommandMatch> FindCommands(TokenizerResult result)
         {
-            return _commandMap.GetCommands(fullPath)
-                .OrderByDescending(x => x.CommandPath.Length)
+            return _commandMap.GetCommands(result)
+                .OrderByDescending(x => x.CommandPath.Count())
                 .ThenByDescending(x => x.Command.Parameters.Count)
-                .ThenByDescending(x => x.Arguments.Length);
+                .ThenByDescending(x => x.Arguments.Count());
         }
 
         /// <summary>

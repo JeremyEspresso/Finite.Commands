@@ -15,8 +15,6 @@ namespace Finite.Commands.Tests
                 .AddModule<ParserTestModule>()
                 .BuildCommandService();
 
-        
-
         [Fact]
         public void ValidParseWithNoParams()
         {

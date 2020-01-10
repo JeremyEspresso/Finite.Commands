@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace Finite.Commands
@@ -56,8 +57,8 @@ namespace Finite.Commands
             }
         }
 
-        public IEnumerable<CommandMatch> GetCommands(ReadOnlyMemory<char>[] commandPath)
-            => _root.FindCommands(commandPath, 0);
+        public IEnumerable<CommandMatch> GetCommands(TokenizerResult result)
+            => _root.FindCommands(result, 0);
 
         public bool AddCommand(ReadOnlyMemory<char>[] path, CommandInfo command)
             => _root.Add(command, path, 0);
@@ -78,17 +79,21 @@ namespace Finite.Commands
                     CommandEqualityComparer.Default);
             }
 
-            public IEnumerable<CommandMatch> FindCommands(ReadOnlyMemory<char>[] segments,
+            public IEnumerable<CommandMatch> FindCommands(TokenizerResult result,
                 int startIndex)
             {
-                if (startIndex >= segments.Length)
+                if (startIndex >= result.TokenPositions.Count())
                     yield break;
 
-                var segment = segments[startIndex];
+                Debug.Assert(result.InputString != null);
+                Debug.Assert(result.TokenPositions != null);
+
+                var range = result.TokenPositions.ElementAt(startIndex);
+                var segment = result.InputString.AsMemory()[range];
 
                 if (_nodes.TryGetValue(segment, out var node))
                 {
-                    var commands = node.FindCommands(segments,
+                    var commands = node.FindCommands(result,
                         startIndex + 1);
                     foreach (var command in commands)
                         yield return command;
@@ -97,9 +102,19 @@ namespace Finite.Commands
                 if (_commands.TryGetValues(segment, out var matches))
                 {
                     foreach (var match in matches)
-                        yield return new CommandMatch(match,
-                            segments.Skip(startIndex + 1).ToArray(),
-                            segments.Take(startIndex + 1).ToArray());
+                    {
+                        IndexSet arguments = new IndexSet(
+                            result.TokenPositions.ReferenceLength);
+                        IndexSet path = new IndexSet(
+                            result.TokenPositions.ReferenceLength);
+
+                        foreach (var argument in result.TokenPositions.Skip(startIndex + 1))
+                            arguments.AddRange(argument);
+                        foreach (var pathSection in result.TokenPositions.Take(startIndex + 1))
+                            path.AddRange(pathSection);
+
+                        yield return new CommandMatch(result.InputString, match, arguments, path);
+                    }
                 }
             }
 

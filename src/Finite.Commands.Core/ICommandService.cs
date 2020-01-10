@@ -37,16 +37,14 @@ namespace Finite.Commands
             IServiceProvider services);
 
         /// <summary>
-        /// Finds commands matching the given path.
+        /// Finds commands matching the given tokenized message.
         /// </summary>
-        /// <param name="fullPath">
-        /// The path to search for commands in.
+        /// <param name="tokenizerResult">
+        /// The tokenized message to look for commands in.
         /// </param>
         /// <returns>
-        /// Any commands matched by <paramref name="fullPath"/>. Any extr
-        /// members of <paramref name="fullPath"/> are passed as parameters to
-        /// the command.
+        /// Any commands matched by the <paramref name="tokenizerResult"/>.
         /// </returns>
-        IEnumerable<CommandMatch> FindCommands(ReadOnlyMemory<char>[] fullPath);
+        IEnumerable<CommandMatch> FindCommands(TokenizerResult tokenizerResult);
     }
 }

@@ -38,7 +38,7 @@ namespace Finite.Commands
         {
             Normal,
             EscapeCharacter,
-            ParameterSeparator,
+            Separator,
             QuotedString
         }
 
@@ -129,7 +129,7 @@ namespace Finite.Commands
         /// An array of strings representing the individual tokens contained in
         /// <paramref name="commandText"/>.
         /// </returns>
-        protected virtual TokenizerResult Tokenize(string commandText,
+        protected internal virtual TokenizerResult Tokenize(string commandText,
             int prefixLength)
         {
             TokenizerResult Failure(TokenizerFailureReason reason,
@@ -139,13 +139,11 @@ namespace Finite.Commands
                     position);
             }
 
-            if (prefixLength >= commandText.Length)
+            if (prefixLength > commandText.Length)
                 throw new ArgumentOutOfRangeException(
                     nameof(prefixLength));
 
-            var commandMemory = commandText.AsMemory();
-            var paramStart = 0;
-            var result = new List<ReadOnlyMemory<char>>();
+            var result = new IndexSet(commandText.Length);
             var state = TokenizerState.Normal;
             var beginQuote = default(char);
 
@@ -158,8 +156,7 @@ namespace Finite.Commands
                 {
                     case TokenizerState.Normal
                         when char.IsWhiteSpace(c):
-                        result.Add(commandMemory[paramStart..i]);
-                        state = TokenizerState.ParameterSeparator;
+                        state = TokenizerState.Separator;
                         break;
                     case TokenizerState.Normal
                         when IsEscapeCharacter(c) && isLastCharacter:
@@ -183,20 +180,18 @@ namespace Finite.Commands
                         return Failure(
                             TokenizerFailureReason.InvalidEscapeSequence, i);
 
-                    case TokenizerState.ParameterSeparator
+                    case TokenizerState.Separator
                         when IsQuoteCharacter(c) && isLastCharacter:
                         return Failure(
                             TokenizerFailureReason.UnfinishedQuotedString, i);
-                    case TokenizerState.ParameterSeparator
+                    case TokenizerState.Separator
                         when IsQuoteCharacter(c):
                         state = TokenizerState.QuotedString;
                         beginQuote = c;
-                        paramStart = i;
                         break;
-                    case TokenizerState.ParameterSeparator
+                    case TokenizerState.Separator
                         when !char.IsWhiteSpace(c):
                         state = TokenizerState.Normal;
-                        paramStart = i;
                         goto default;
 
                     case TokenizerState.QuotedString
@@ -209,18 +204,16 @@ namespace Finite.Commands
                             TokenizerFailureReason.UnfinishedQuotedString, i);
 
                     default:
+                        result.Add(i);
                         break;
                 }
             }
-
-            // Add any final parameters
-            result.Add(commandMemory.Slice(paramStart));
 
             if (state != TokenizerState.Normal)
                 return Failure(TokenizerFailureReason.InvalidState,
                     commandText.Length);
 
-            return new TokenizerResult(result.ToArray());
+            return new TokenizerResult(commandText, result);
         }
     }
 }

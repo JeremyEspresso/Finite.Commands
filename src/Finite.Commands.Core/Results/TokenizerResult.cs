@@ -10,14 +10,14 @@ namespace Finite.Commands
     public sealed class TokenizerResult : IResult
     {
         /// <summary>
-        /// The parsed token stream, when successful, or null otherwise.
+        /// The parsed token positions, when successful, or null otherwise.
         /// </summary>
-        public ReadOnlyMemory<char>[]? TokenStream { get; }
+        public IndexSet? TokenPositions { get; }
 
         /// <summary>
-        /// The input string which caused the error, or null otherwise.
+        /// The input string which was tokenized, or has caused an error.
         /// </summary>
-        public string? InputString { get; }
+        public string InputString { get; }
 
         /// <summary>
         /// The position of the input string where the error occured, or null
@@ -64,14 +64,18 @@ namespace Finite.Commands
         /// <summary>
         /// Constructs a new <see cref="TokenizerResult"/> which has succeeded.
         /// </summary>
-        /// <param name="tokenStream">
-        /// The parsed token stream.
+        /// <param name="input">
+        /// The input string which was tokenized.
         /// </param>
-        public TokenizerResult(ReadOnlyMemory<char>[] tokenStream)
+        /// <param name="tokenPositions">
+        /// The parsed token positions.
+        /// </param>
+        public TokenizerResult(string input, IndexSet tokenPositions)
         {
             IsSuccess = true;
 
-            TokenStream = tokenStream;
+            TokenPositions = tokenPositions;
+            InputString = input;
         }
     }
 }
